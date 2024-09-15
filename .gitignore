@@ -1,0 +1,6 @@
+Debug/
+Release/
+x64/
+http server.vcxproj.user
+http server.vcxproj.filters
+http server.vcxproj.user
