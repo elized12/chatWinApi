@@ -6,6 +6,7 @@
 #include <conio.h>
 #include <tchar.h>
 #include <CommCtrl.h>
+#include <iphlpapi.h>
 #include "include/socket/tcpsock.h"
 #include "logics/other/Convector.h"
 #include "logics/struct/thread_safe_queue.h"
@@ -28,6 +29,9 @@
 #define tchar char
 #endif
 
+#pragma comment(lib, "iphlpapi.lib")
+
+
 //DEFINE USERS
 #define WM_CHANGE_STATE (WM_USER + 1)
 #define ID_CHANGE_NICKNAME (WM_USER  + 2)
@@ -37,6 +41,7 @@
 #define IBD_BUTTON_CREATE 3
 #define IBD_BUTTON_DISCONNECT 4
 #define IBD_EDIT_ADDRESS_ROOM 5
+#define PORT_SERVER 50000
 
 enum State : int
 {
@@ -50,6 +55,7 @@ enum State : int
 LRESULT CALLBACK editAddressProc(HWND hWnd, UINT  msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefDara);
 LRESULT CALLBACK wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 tstring getStringFromComponent(HWND hWnd);
+std::string GetLocalIPAddress();
 std::wstring validateMessage(std::wstring& message, HWND window);
 void viewMessage(Message& message, HWND& windowView, bool isSetDate = false);
 void initSender(Sender& sender);
@@ -76,7 +82,7 @@ MessageStore messageStore(30);
 ListUser connectionUsers;
 std::wstring bufferMessage;
 User user(L"");
-Address serverAddres(TypeAddress::IPV4, std::string("127.0.0.1"), 12345);
+Address serverAddres(TypeAddress::IPV4, GetLocalIPAddress(), PORT_SERVER);
 Address connectRoom;
 Server server(serverAddres);
 Sender sender;
@@ -89,8 +95,28 @@ std::once_flag initRand;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hInstanceOld, LPSTR cmd, int modeShow)
 {
 	INITCOMMONCONTROLSEX icex = initCommoonContEx();
-	WNDCLASS wndClass = initWindowClass(hInstance, wndProc);
-	HWND window = createWindow(className, windowName, hInstance, modeShow);
+	WNDCLASS wndClass;
+	HWND window;
+
+	MessageBoxA(NULL, reinterpret_cast<LPCSTR>(&serverAddres.getIpAddress()), "info", MB_OK);
+	try
+	{
+		wndClass = initWindowClass(hInstance, wndProc);
+	}
+	catch (std::exception& ex)
+	{
+		MessageBox(NULL, _T("Error init window class"), _T("Error"), MB_OK);
+		return 0;
+	}
+	try
+	{
+		window = createWindow(className, windowName, hInstance, modeShow);
+	}
+	catch (const std::exception&)
+	{
+		MessageBox(NULL, _T("Error create window"), _T("Error"), MB_OK);
+		return 0;
+	}
 	user.nickname = generateNickname();
 
 	initSender(sender);
@@ -190,7 +216,14 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		server.SetStatus(StatusServer::NOT_LISTEN);
 
-		server.start(queueMessage, connectionUsers);
+		StatusCreateServer statusCreate = server.start(queueMessage, connectionUsers);
+
+		if (statusCreate.isBind == false || statusCreate.isListen == false)
+		{
+			MessageBox(hWnd, _T("Порт занят"), _T("ошибка"), MB_OK);
+			PostQuitMessage(NULL);
+		}
+
 		sender.start(queueMessage, messageStore, connectionUsers, user);
 		
 		break;
@@ -256,7 +289,7 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (inet_pton(AF_INET, addressConnectStr.data(), &sockAddress) == 1)
 			{
-				connectRoom = Address(TypeAddress::IPV4, addressConnectStr, 12345);
+				connectRoom = Address(TypeAddress::IPV4, addressConnectStr, PORT_SERVER);
 
 				if (connectRoom == serverAddres)
 				{
@@ -418,7 +451,7 @@ void initServer(Server& server, HWND mainWindow, HWND* editViewMessage, Address&
 			case Command::INIT_USER:
 			{
 				//TODO ИСПРАВИТЬ ПОТОМ ПОРТ НА 12345
-				message.user.addressSocket = Address(TypeAddress::IPV4, conn.getAddress().getIpAddress(), 1234);
+				message.user.addressSocket = Address(TypeAddress::IPV4, conn.getAddress().getIpAddress(), PORT_SERVER);
 				listUsers.addUser(message.user);			
 				viewMessage(message, *editViewMessage, false);
 				sendNotification(message, queueMessage, Command::INIT_USER_NOTIFICATION);
@@ -473,7 +506,7 @@ void initServer(Server& server, HWND mainWindow, HWND* editViewMessage, Address&
 			}
 			default:
 			{
-				message.user.addressSocket = Address(TypeAddress::IPV4, conn.getAddress().getIpAddress(), 1234);
+				message.user.addressSocket = Address(TypeAddress::IPV4, conn.getAddress().getIpAddress(), PORT_SERVER);
 				sendNotification(message, queue, Command::ROOM_IS_NOT_CREATE_NOTIFICATION);
 				break;
 			}
@@ -487,7 +520,7 @@ void initServer(Server& server, HWND mainWindow, HWND* editViewMessage, Address&
 			case Command::SEND_MESSAGE_TO_SERVER:
 			case Command::INIT_USER:
 			{
-				message.user.addressSocket = Address(TypeAddress::IPV4, conn.getAddress().getIpAddress(), 1234);
+				message.user.addressSocket = Address(TypeAddress::IPV4, conn.getAddress().getIpAddress(), PORT_SERVER);
 				sendNotification(message, queue, Command::ROOM_IS_NOT_CREATE_NOTIFICATION);
 				break;
 			}
@@ -818,4 +851,78 @@ std::wstring validateMessage(std::wstring& message, HWND window)
 	ReleaseDC(window, hdc);
 	
 	return resultMessage;
+}
+std::string GetLocalIPAddress() {
+	// Инициализация Winsock
+	WSADATA wsaData;
+	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (result != 0) {
+		std::cerr << "WSAStartup failed: " << result << std::endl;
+		return "";
+	}
+
+	// Получение информации о сетевых интерфейсах
+	PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+	ULONG outBufLen = 15000; // Размер буфера для информации о сетевых интерфейсах
+	ULONG flags = GAA_FLAG_INCLUDE_PREFIX;
+	DWORD dwRetVal = 0;
+
+	do {
+		pAddresses = (IP_ADAPTER_ADDRESSES*)malloc(outBufLen);
+		if (pAddresses == NULL) {
+			std::cerr << "Memory allocation failed for IP_ADAPTER_ADDRESSES struct" << std::endl;
+			WSACleanup();
+			return "";
+		}
+
+		dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, pAddresses, &outBufLen);
+		if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+			free(pAddresses);
+			pAddresses = NULL;
+		}
+		else {
+			break;
+		}
+	} while (dwRetVal == ERROR_BUFFER_OVERFLOW);
+
+	if (dwRetVal != NO_ERROR) {
+		std::cerr << "GetAdaptersAddresses failed with error: " << dwRetVal << std::endl;
+		free(pAddresses);
+		WSACleanup();
+		return "";
+	}
+
+	// Поиск первого локального IPv4 адреса, назначенного DHCP-сервером
+	std::string localIPAddress;
+	PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses;
+	while (pCurrAddresses) {
+		// Фильтрация по типу интерфейса (например, Ethernet или Wi-Fi)
+		if (pCurrAddresses->IfType == IF_TYPE_ETHERNET_CSMACD || pCurrAddresses->IfType == IF_TYPE_IEEE80211) {
+			PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pCurrAddresses->FirstUnicastAddress;
+			while (pUnicast) {
+				if (pUnicast->Address.lpSockaddr->sa_family == AF_INET) {
+					SOCKADDR_IN* sockaddr_ipv4 = (SOCKADDR_IN*)pUnicast->Address.lpSockaddr;
+					char ipAddress[INET_ADDRSTRLEN];
+					inet_ntop(AF_INET, &(sockaddr_ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
+
+					// Проверка, был ли адрес назначен DHCP-сервером
+					if (pCurrAddresses->Dhcpv4Server.lpSockaddr && pCurrAddresses->Dhcpv4Server.lpSockaddr->sa_family == AF_INET) {
+						localIPAddress = ipAddress;
+						break; // Выходим из цикла, если нашли IPv4 адрес
+					}
+				}
+				pUnicast = pUnicast->Next;
+			}
+			if (!localIPAddress.empty()) {
+				break; // Выходим из цикла, если нашли IPv4 адрес
+			}
+		}
+		pCurrAddresses = pCurrAddresses->Next;
+	}
+
+	// Освобождение памяти и очистка Winsock
+	free(pAddresses);
+	WSACleanup();
+
+	return localIPAddress;
 }
