@@ -15,4 +15,5 @@ public:
 	bool userExist(User& user);
 	std::vector<User> getConnectUsers();
 	std::unique_ptr<User> getUserByNickname(std::wstring nick);
+	void clear();
 };

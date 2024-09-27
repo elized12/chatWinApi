@@ -48,3 +48,8 @@ std::unique_ptr<User> ListUser::getUserByNickname(std::wstring nick)
 
 	return nullptr;
 }
+
+void ListUser::clear()
+{
+	_list.clear();
+}

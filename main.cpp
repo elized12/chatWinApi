@@ -98,7 +98,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hInstanceOld, LPSTR cmd, int m
 	WNDCLASS wndClass;
 	HWND window;
 
-	MessageBoxA(NULL, reinterpret_cast<LPCSTR>(&serverAddres.getIpAddress()), "info", MB_OK);
 	try
 	{
 		wndClass = initWindowClass(hInstance, wndProc);
@@ -322,6 +321,9 @@ LRESULT CALLBACK wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				sender.sendClosedMessageAll(connectionUsers);
 			}
 			changeState(stateMachine, State::DISCONNECT, hWnd);
+
+
+			
 			server.SetStatus(StatusServer::NOT_LISTEN);
 			break;
 		}
@@ -450,7 +452,6 @@ void initServer(Server& server, HWND mainWindow, HWND* editViewMessage, Address&
 			}
 			case Command::INIT_USER:
 			{
-				//TODO ИСПРАВИТЬ ПОТОМ ПОРТ НА 12345
 				message.user.addressSocket = Address(TypeAddress::IPV4, conn.getAddress().getIpAddress(), PORT_SERVER);
 				listUsers.addUser(message.user);			
 				viewMessage(message, *editViewMessage, false);
@@ -852,40 +853,49 @@ std::wstring validateMessage(std::wstring& message, HWND window)
 	
 	return resultMessage;
 }
-std::string GetLocalIPAddress() {
-	// Инициализация Winsock
+std::string GetLocalIPAddress() 
+{
 	WSADATA wsaData;
 	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (result != 0) {
+	
+	if (result != 0) 
+	{
 		std::cerr << "WSAStartup failed: " << result << std::endl;
 		return "";
 	}
 
-	// Получение информации о сетевых интерфейсах
 	PIP_ADAPTER_ADDRESSES pAddresses = NULL;
-	ULONG outBufLen = 15000; // Размер буфера для информации о сетевых интерфейсах
+	ULONG outBufLen = 15000;
 	ULONG flags = GAA_FLAG_INCLUDE_PREFIX;
 	DWORD dwRetVal = 0;
 
-	do {
+	do 
+	{
 		pAddresses = (IP_ADAPTER_ADDRESSES*)malloc(outBufLen);
-		if (pAddresses == NULL) {
+		
+		if (pAddresses == NULL) 
+		{
 			std::cerr << "Memory allocation failed for IP_ADAPTER_ADDRESSES struct" << std::endl;
 			WSACleanup();
 			return "";
 		}
 
 		dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, pAddresses, &outBufLen);
-		if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+		
+		if (dwRetVal == ERROR_BUFFER_OVERFLOW) 
+		{
 			free(pAddresses);
 			pAddresses = NULL;
 		}
-		else {
+		else 
+		{
 			break;
 		}
+
 	} while (dwRetVal == ERROR_BUFFER_OVERFLOW);
 
-	if (dwRetVal != NO_ERROR) {
+	if (dwRetVal != NO_ERROR) 
+	{
 		std::cerr << "GetAdaptersAddresses failed with error: " << dwRetVal << std::endl;
 		free(pAddresses);
 		WSACleanup();
@@ -895,32 +905,39 @@ std::string GetLocalIPAddress() {
 	// Поиск первого локального IPv4 адреса, назначенного DHCP-сервером
 	std::string localIPAddress;
 	PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses;
-	while (pCurrAddresses) {
+
+	while (pCurrAddresses) 
+	{
 		// Фильтрация по типу интерфейса (например, Ethernet или Wi-Fi)
-		if (pCurrAddresses->IfType == IF_TYPE_ETHERNET_CSMACD || pCurrAddresses->IfType == IF_TYPE_IEEE80211) {
+		if (pCurrAddresses->IfType == IF_TYPE_ETHERNET_CSMACD || pCurrAddresses->IfType == IF_TYPE_IEEE80211) 
+		{
 			PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pCurrAddresses->FirstUnicastAddress;
-			while (pUnicast) {
-				if (pUnicast->Address.lpSockaddr->sa_family == AF_INET) {
+
+			while (pUnicast) 
+			{
+				if (pUnicast->Address.lpSockaddr->sa_family == AF_INET) 
+				{
 					SOCKADDR_IN* sockaddr_ipv4 = (SOCKADDR_IN*)pUnicast->Address.lpSockaddr;
 					char ipAddress[INET_ADDRSTRLEN];
 					inet_ntop(AF_INET, &(sockaddr_ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
 
-					// Проверка, был ли адрес назначен DHCP-сервером
-					if (pCurrAddresses->Dhcpv4Server.lpSockaddr && pCurrAddresses->Dhcpv4Server.lpSockaddr->sa_family == AF_INET) {
+					if (pCurrAddresses->Dhcpv4Server.lpSockaddr && pCurrAddresses->Dhcpv4Server.lpSockaddr->sa_family == AF_INET) 
+					{
 						localIPAddress = ipAddress;
-						break; // Выходим из цикла, если нашли IPv4 адрес
+						break; 
 					}
 				}
+
 				pUnicast = pUnicast->Next;
 			}
-			if (!localIPAddress.empty()) {
-				break; // Выходим из цикла, если нашли IPv4 адрес
+			if (!localIPAddress.empty()) 
+			{
+				break;
 			}
 		}
 		pCurrAddresses = pCurrAddresses->Next;
 	}
 
-	// Освобождение памяти и очистка Winsock
 	free(pAddresses);
 	WSACleanup();
 
