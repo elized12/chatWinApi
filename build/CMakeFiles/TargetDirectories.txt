@@ -1,3 +1,0 @@
-/home/elized12/Desktop/projects/c++/chatWinApi/build/CMakeFiles/ChatWinApi.dir
-/home/elized12/Desktop/projects/c++/chatWinApi/build/CMakeFiles/edit_cache.dir
-/home/elized12/Desktop/projects/c++/chatWinApi/build/CMakeFiles/rebuild_cache.dir
