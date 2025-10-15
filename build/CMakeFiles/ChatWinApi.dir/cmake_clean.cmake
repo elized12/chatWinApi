@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/ChatWinApi.dir/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/components/sender/sender.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/components/sender/sender.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/components/server/server.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/components/server/server.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/models/message.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/models/message.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/other/Convector.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/other/Convector.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/other/statemachine.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/other/statemachine.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/struct/listuser.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/struct/listuser.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/struct/msgstore.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/struct/msgstore.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/logics/struct/thread_safe_queue.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/logics/struct/thread_safe_queue.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/main.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/main.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/address.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/address.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/conn.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/conn.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/socket.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/socket.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/sockfactory.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/sockfactory.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/winsocket.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/src/oc/socket/winsocket.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/src/oc/win/wsainit.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/src/oc/win/wsainit.cpp.o.d"
+  "CMakeFiles/ChatWinApi.dir/src/socket/tcpsock.cpp.o"
+  "CMakeFiles/ChatWinApi.dir/src/socket/tcpsock.cpp.o.d"
+  "ChatWinApi"
+  "ChatWinApi.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/ChatWinApi.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
